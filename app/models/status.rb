@@ -1,6 +1,7 @@
 class Status < ActiveRecord::Base
   belongs_to :creator, class_name: 'User', foreign_key: 'user_id'
-
+  belongs_to :parent_status, class_name: 'Status', foreign_key: 'retweet_id'
+  
   validates :creator, presence: true
   validates :body, presence: true, length: {minimum: 10}
 
