@@ -1,4 +1,6 @@
 class UsersController < ApplicationController
+  before_action :require_user, only: [:follow, :unfollow, :timeline, :mentions]
+
 
   def index
     @users = User.all
@@ -23,6 +25,42 @@ class UsersController < ApplicationController
     @user = User.find_by username: params[:username]
   end
 
+  def follow
+    user = User.find(params[:id])
+    if user
+      current_user.following_users << user
+      flash[:notice] = "You are now following #{user.username}."
+      redirect_to user_path(user.username)
+    else
+      wrong_path
+    end
+  end
+
+  def unfollow
+    user = User.find(params[:id])
+    rel = Relationship.where(follower:current_user, leader: user).first    
+    if user && rel
+      rel.destroy
+      flash[:notice] = "You are no longer following #{user.username}."
+      redirect_to user_path(user.username)
+    else
+      wrong_path
+    end
+  end
+
+  def timeline
+    @statuses = []
+    current_user.following_users.each do |user|
+      @statuses << user.statuses.all
+    end
+    @statuses.flatten! # the bang ! is needed, so that we are referencing the computer to return the new object, flatten array rather than returning the old one. 
+    # used binding pry to establish that this is a nested array, need to flatten it to one array
+  end
+
+  def mentions
+    current_user.mark_unread_mentions!
+  end
+
   private
 
   def user_params
@@ -30,3 +68,5 @@ class UsersController < ApplicationController
   end
 
 end
+
+
